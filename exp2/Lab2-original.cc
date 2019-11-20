@@ -24,8 +24,8 @@ int main (int argc, char *argv[])
         std::string phyMode ("DsssRate1Mbps");
         double rss = -80;  // -dBm
 
-        std::string CBR_Rate_bps = "860kbps";	
-        uint32_t Queue_Size_Packet = 30;	
+        std::string CBR_Rate_bps = "20kbps";	
+        uint32_t Queue_Size_Packet = 860;	
 
         NodeContainer c;
         c.Create (2);
@@ -96,15 +96,14 @@ int main (int argc, char *argv[])
         int CBR_PacketSize_Byte = 1000;
 	int CBR_Port = 812;
 	double Traffic_StartTime_sec = 1 , Traffic_EndTime_sec = 15;
-	double TotalSimulationTime_sec = 30;
+	//double TotalSimulationTime_sec = 30;
 	ApplicationContainer CBR_Tx_App , CBR_Rx_App;
 
 	// Transmitter
 	for( int counter = 0 ; counter < 1 ; ++counter )
 	{
 		//set your transmitter(page 18 19)
-		OnOffHelper onoff("ns3::UdpSocketFactory",
-							InetSocketAddress(i.GetAddress(1,0), CBR_Port));
+		OnOffHelper onoff("ns3::UdpSocketFactory",InetSocketAddress(i.GetAddress(1,0), CBR_Port));
 		onoff.SetConstantRate(DataRate(CBR_Rate_bps), CBR_PacketSize_Byte);
 		CBR_Tx_App = onoff.Install(c.Get(0));
 		CBR_Tx_App.Start(Seconds (Traffic_StartTime_sec));
@@ -115,8 +114,7 @@ int main (int argc, char *argv[])
 	for( int counter = 0 ; counter < 1 ; ++counter )
 	{
 		//set your receiver(page 20)
-		PacketSinkHelper sink("ns3:UdpSocketFactory",
-								InetSocketAddress (i.GetAddress(1,0), CBR_Port));
+		PacketSinkHelper sink("ns3:UdpSocketFactory",InetSocketAddress (i.GetAddress(1,0), CBR_Port));
 		CBR_Rx_App = sink.Install(c.Get(1));
 		CBR_Rx_App.Start(Seconds (Traffic_StartTime_sec));
 		CBR_Rx_App.Stop(Seconds (Traffic_EndTime_sec));
@@ -129,7 +127,7 @@ int main (int argc, char *argv[])
 	double Avg_e2eDelaySec = 0.0;
 	int Total_RxByte = 0;
 	double Avg_PDR = 0.0;
-	int Avg_Base = 0;
+	//int Avg_Base = 0;
 
 	std::cout << "Lab2 Simulation Start\n\n";
     std::cout << "[ CBR Rate : " << CBR_Rate_bps << " + " << "Queue Size : " << Queue_Size_Packet << " Byte ] \n";
@@ -141,7 +139,7 @@ int main (int argc, char *argv[])
 
 	
 	// insert your statistics calculation here(ppt page26)
-	for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = start.begin(); i != stats.end(); ++i)
+	for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin(); i != stats.end(); ++i)
 	{
 		Avg_e2eDelaySec = (i->second.delaySum.GetSeconds())/(i->second.rxPackets);
 		Avg_PDR = double(i->second.rxPackets)/double(i->second.txPackets);
@@ -167,4 +165,3 @@ int main (int argc, char *argv[])
 
     return 0;
 }
-
