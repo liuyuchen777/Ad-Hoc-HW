@@ -19,21 +19,25 @@ using namespace ns3;
 double LinearScale2dB( double LinearScale_Value )
 {
   	//your code
+	return 10.0*log10(LinearScale_Value);
 }
 
 double dB2LinearScale( double dB_Value )
 {
   	//your code
+	return pow(10.0,dB_Value/10.0);
 }
 
 double dBm2Watt( double dBm_Value )
 {
   	//your code
+	return pow(10.0, (dBm_Value-30)/10.0);
 }
 
 double Watt2dBm( double Watt_Value )
 {
   	//your code
+	return (10.0*log10(Watt_Value*1000));
 }
 
 double TwoRayGround_CS_RX_Threshold_Calculator( double TX_Power_dBm , double TX_Antenna_Gain , double RX_Antenna_Gain , double TX_Height_meter , double RX_Height_meter , double System_Loss , double Range_meter , double Lambda_meter , double MinDistance_meter )
@@ -70,7 +74,7 @@ int main( int argc , char *argv[] )
 {
 	
 	// 50 , 100 , 150 , 190 , 220 , 280 , 320
-	int Node1and2_Distance_meter = 50 ;
+	int Node1and2_Distance_meter = 320 ;
 	
 	
 	// Create node
@@ -79,17 +83,20 @@ int main( int argc , char *argv[] )
 	WiFiSTA_Node.Create( Num_WiFiSTA_Node );
 
 	// set position
-	int Start_XPos_meter , Start_YPos_meter , Start_ZPos_meter;
-	int Node_HorizonSpacing_meter = 100;
+	//int Start_XPos_meter , Start_YPos_meter , Start_ZPos_meter;
+	//int Node_HorizonSpacing_meter = 100;
 	MobilityHelper WiFiSTA_Mobility;
 
-	Start_XPos_meter = Start_YPos_meter = Start_ZPos_meter = 0;
+	//Start_XPos_meter = Start_YPos_meter = Start_ZPos_meter = 0;
 	Ptr<ListPositionAllocator> WiFiSTA_PositionAllocator = CreateObject<ListPositionAllocator> ();
   	//WiFiSTA_PositionAllocator->Add( Vector(x,y,z) );
 	//------------------------------
 	
 	//set the position of four nodes
-
+	WiFiSTA_PositionAllocator->Add(Vector(0,Node1and2_Distance_meter,0));
+	WiFiSTA_PositionAllocator->Add(Vector(170,Node1and2_Distance_meter,0));	
+	WiFiSTA_PositionAllocator->Add(Vector(170,0,0));
+	WiFiSTA_PositionAllocator->Add(Vector(340,0,0));
 	//------------------------------
 	WiFiSTA_Mobility.SetPositionAllocator( WiFiSTA_PositionAllocator );
 	WiFiSTA_Mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -113,7 +120,7 @@ int main( int argc , char *argv[] )
 		WiFi.SetStandard( WIFI_PHY_STANDARD_80211ac );
 	WiFi.SetRemoteStationManager( "ns3::IdealWifiManager" );
 
-	std::string RtsCts_Activate_LowerBound = "10000";		//
+	std::string RtsCts_Activate_LowerBound = "0";		//
 	Config::SetDefault( "ns3::WifiRemoteStationManager::RtsCtsThreshold" , StringValue( RtsCts_Activate_LowerBound ) );
 
 	double CenterFrequency_Hz = 5.0e+09 , SystemLoss = 1 , MinDistance_meter = 0 , NodeHeight_meter = 1.5;
@@ -128,7 +135,7 @@ int main( int argc , char *argv[] )
 
 	double TxPower_Watt = 0.28183815 , TxAntennaGain = 1 , RxAntennaGain = 1 ,
 	       TxHeight_meter = NodeHeight_meter , RxHeight_meter = NodeHeight_meter ,
-	       CS_Range_meter = 100 , TX_Range_meter = 100 ,		
+	       CS_Range_meter = 300 , TX_Range_meter = 200 ,		
 	       Lambda_meter = ( 299792458.0 / CenterFrequency_Hz );
 		
 	// Set CS_Threshold
@@ -189,17 +196,28 @@ int main( int argc , char *argv[] )
 
 
 	// Transmitter
-	int   Tx_Index[ TestCase_NumCommPair ] = {   ,   }
-	    , Rx_Index[ TestCase_NumCommPair ] = {   ,   };//set the number of transmitter and receiver
+	int   Tx_Index[ TestCase_NumCommPair ] = {  0 , 3  }
+	    , Rx_Index[ TestCase_NumCommPair ] = {  1 , 2  };//set the number of transmitter and receiver
 
 	for( int counter = 0 ; counter < TestCase_NumCommPair ; ++counter )
 	{
 		//set transmitter
+		OnOffHelper onoff ("ns3::UdpSocketFactory",
+				InetSocketAddress (WiFiLink_InterfaceIP.GetAddress(Rx_Index[counter],0), CBR_Port));
+		onoff.SetConstantRate(DataRate(CBR_Rate_bps), CBR_PacketSize_Byte);
+		CBR_Tx_App = onoff.Install (WiFiSTA_Node.Get (Tx_Index[counter]));
+		CBR_Tx_App.Start (Seconds (Traffic_StartTime_sec));
+		CBR_Tx_App.Stop (Seconds (Traffic_EndTime_sec));
 	}
 	// Receiver
 	for( int counter = 0 ; counter < TestCase_NumCommPair ; ++counter )
 	{
 		//set receiver
+		PacketSinkHelper sink ("ns3::UdpSocketFactory",
+				InetSocketAddress (WiFiLink_InterfaceIP.GetAddress(Rx_Index[counter],0), CBR_Port));
+		CBR_Rx_App = sink.Install (WiFiSTA_Node.Get (Rx_Index[counter]));
+		CBR_Rx_App.Start (Seconds (Traffic_StartTime_sec));
+		CBR_Rx_App.Stop (Seconds (Traffic_EndTime_sec));
 	}
 
 
@@ -213,7 +231,6 @@ int main( int argc , char *argv[] )
 
 	Simulator::Stop( Seconds( TotalSimulationTime_sec ) );
 	Simulator::Run();
-
 
 	// Show Statistics Information
 	double Avg_SystemThroughput_bps = 0.0;
@@ -233,7 +250,7 @@ int main( int argc , char *argv[] )
 					( 
 					  
 						//your code
-
+						double(counter->second.rxBytes)*8/(counter->second.timeLastRxPacket.GetSeconds()-counter->second.timeFirstTxPacket.GetSeconds())
 					);
 
 					
@@ -241,8 +258,9 @@ int main( int argc , char *argv[] )
 					(
 					   
 						//your code
-
+						double(counter->second.txPackets-counter->second.rxPackets)/double(counter->second.txPackets)
 					);
+					std::cout<< "lost packet:	" << counter->second.lostPackets << std::endl;
 				++Avg_Base;
 				
 		}
@@ -251,7 +269,6 @@ int main( int argc , char *argv[] )
 	std::cout << "Lab3 Simulation Start\n\n";
 		
 	std::cout << "[ " << "Distance between Node 1 and Node 2 = " << Node1and2_Distance_meter << "m ] \n";
-	
 
 	Avg_SystemThroughput_bps = Avg_SystemThroughput_bps/Avg_Base;
 	std::cout << "Average System Throughput : ";

@@ -24,8 +24,8 @@ int main (int argc, char *argv[])
         std::string phyMode ("DsssRate1Mbps");
         double rss = -80;  // -dBm
 
-        std::string CBR_Rate_bps = "20kbps";	
-        uint32_t Queue_Size_Packet = 860;	
+        std::string CBR_Rate_bps = "1160kbps";	
+        uint32_t Queue_Size_Packet = 50;	
 
         NodeContainer c;
         c.Create (2);
@@ -103,21 +103,23 @@ int main (int argc, char *argv[])
 	for( int counter = 0 ; counter < 1 ; ++counter )
 	{
 		//set your transmitter(page 18 19)
-		OnOffHelper onoff("ns3::UdpSocketFactory",InetSocketAddress(i.GetAddress(1,0), CBR_Port));
+		OnOffHelper onoff ("ns3::UdpSocketFactory",
+				InetSocketAddress (i.GetAddress(1,0), CBR_Port));
 		onoff.SetConstantRate(DataRate(CBR_Rate_bps), CBR_PacketSize_Byte);
-		CBR_Tx_App = onoff.Install(c.Get(0));
-		CBR_Tx_App.Start(Seconds (Traffic_StartTime_sec));
-		CBR_Tx_App.Stop(Seconds (Traffic_EndTime_sec));
+		CBR_Tx_App = onoff.Install (c.Get (0));
+		CBR_Tx_App.Start (Seconds (Traffic_StartTime_sec));
+		CBR_Tx_App.Stop (Seconds (Traffic_EndTime_sec));
 	}
 
 	// Receiver
 	for( int counter = 0 ; counter < 1 ; ++counter )
 	{
 		//set your receiver(page 20)
-		PacketSinkHelper sink("ns3:UdpSocketFactory",InetSocketAddress (i.GetAddress(1,0), CBR_Port));
-		CBR_Rx_App = sink.Install(c.Get(1));
-		CBR_Rx_App.Start(Seconds (Traffic_StartTime_sec));
-		CBR_Rx_App.Stop(Seconds (Traffic_EndTime_sec));
+		PacketSinkHelper sink ("ns3::UdpSocketFactory",
+				InetSocketAddress (i.GetAddress(1,0), CBR_Port));
+		CBR_Rx_App = sink.Install (c.Get (1));
+		CBR_Rx_App.Start (Seconds (Traffic_StartTime_sec));
+		CBR_Rx_App.Stop (Seconds (Traffic_EndTime_sec));
 	}
   
         Simulator::Stop (Seconds (30.0));
@@ -136,17 +138,19 @@ int main (int argc, char *argv[])
 	Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
 	FlowMonitor::FlowStatsContainer stats = monitor->GetFlowStats ();
 	//-------------------------------------------------------------------------------------------
-
-	
-	// insert your statistics calculation here(ppt page26)
-	for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin(); i != stats.end(); ++i)
+	for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
 	{
+		//Ipv4FlowClassifier::FiveTuple t = classifier -> FindFlow(i->first);
 		Avg_e2eDelaySec = (i->second.delaySum.GetSeconds())/(i->second.rxPackets);
 		Avg_PDR = double(i->second.rxPackets)/double(i->second.txPackets);
 		Total_RxByte = (i->second.rxBytes);
-	}
 
+	}
+	// insert your statistics calculation here(ppt page26)
+
+	
 	//-------------------------------------------------------------------------------------------
+	//Avg_e2eDelaySec =
 	
 	std::cout << "Average System End-to-End Delay : ";
 	std::cout << Avg_e2eDelaySec << " [sec]\n";
