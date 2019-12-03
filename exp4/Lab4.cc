@@ -182,10 +182,10 @@ int main( int argc , char *argv[] )
 		//    , Rx_Index[ TestCase1_NumCommPair ] = {1,5,3,7};/*Set up your rx list and tx list*/
 
 		//int   Tx_Index[ TestCase2_NumCommPair ] = {0,2,5,7,8,10,13,15}
-		//    , Rx_Index[ TestCase2_NumCommPair ] = {1,3,6,11,4,9,2,14};/*Set up your rx list and tx list*/
+		//    , Rx_Index[ TestCase2_NumCommPair ] = {1,3,6,11,4,9,12,14};/*Set up your rx list and tx list*/
 
-		int   Tx_Index[ TestCase3_NumCommPair ] = {0,1,2,3,4,11,13,15,16,17,18,19}
-		    , Rx_Index[ TestCase3_NumCommPair ] = {5,6,7,8,9,10,14,20,21,22,23,24};/*Set up your rx list and tx list*/
+		int   Tx_Index[ TestCase3_NumCommPair ] = {5,6,7,8,9,11,13,15,16,17,18,19}
+		    , Rx_Index[ TestCase3_NumCommPair ] = {0,1,2,3,4,10,14,20,21,22,23,24};/*Set up your rx list and tx list*/
 
 
 		// Transmitter
